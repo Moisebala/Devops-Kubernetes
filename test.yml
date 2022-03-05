@@ -1,0 +1,121 @@
+- hosts: all
+  gather_facts: yes 
+  vars:
+     contents: "{{ lookup('file', '~/.kube/master.log') }}"
+     become_user: root
+  tasks: 
+  
+#  - name: copy test en remote 
+#    copy: 
+#      src: $HOME/test1/moussa
+#      dest: $HOME/test2/allo
+#      remote_src: yes
+#    register: remote
+
+#  - name: Save register
+#    copy:
+#      content: "{{remote}}"
+#      dest: $HOME/test2/remote.log
+
+#  - name: "Searching for a String"
+#    become: yes
+#    become_user: root
+#    tags: example1
+#    when: ansible_host=='kmaster-01'
+#    lineinfile:
+#       path: ~/.kube/master.log
+#       regexp: '^%kubeadm'
+#       line: "kubeadm join"
+#       state: present
+#    check_mode: yes
+#    register: kubeadm2
+#    failed_when: kubeadm2 is changed 
+
+#  - name: "sample task in case the String kubeadm in the file"
+#    debug: msg="DEBUG is enabled in master Log file"
+#    when: kubeadm2 is not changed
+
+#    command: ping -c 4  "{{ansible_host}}"
+
+  - shell: cat  ~/.kube/master.log  |  awk '$1 ~ /^ *kubeadm/'
+    tags: install
+    register: kubeadm
+    when: inventory_hostname =='kmaster-01'
+    ignore_errors: true
+
+
+  - shell: cat  ~/.kube/master.log  |  awk '$1 ~ /^ *--/'
+    register: kubeadm3
+    when: inventory_hostname =='kmaster-01'
+    ignore_errors: true
+
+  - name: extract password from file
+    slurp:
+      src: ~/.kube/master.log
+    when: inventory_hostname =='kmaster-01'
+    register: test
+
+#  - name: Run a script using an executable in a system path
+#    script: line.py
+#    args:
+#    executable: python
+
+#    delegate_to: kmaster-01
+
+# - debug: "{{controler}}" --token "{{mastertoken}}" --discovery-token-ca-cert-hash sha256:"{{discovery_cert}}"
+   
+  - name: definir variable controler 
+    set_fact:
+        controler: "{{((kubeadm.stdout).split('\n')[0]).split(' ')[4] }}" 
+    when: inventory_hostname =='kmaster-01'
+
+
+  - name: definir variable du token 
+    set_fact:
+        token: "{{((kubeadm.stdout).split('\n')[0]).split(' ')[6] }}"
+    when: inventory_hostname =='kmaster-01'
+
+  - name: definir variable du discovery-token 
+    set_fact:
+        discovery: "{{((kubeadm3.stdout).split('\n')[0]).split(' ')[1] }}"
+    when: inventory_hostname =='kmaster-01'
+
+
+  - name: definir variable du certificat key 
+    set_fact:
+        certificat: "{{((kubeadm3.stdout).split('\n')[1]).split(' ')[2] }}"
+    when: inventory_hostname =='kmaster-01'
+
+
+
+  - name: Modifier workers/vars/main.yml 
+    tags: tests
+    become: yes
+    become_user: root
+    lineinfile: 
+       path:  roles/workernodes/vars/main.yml
+       regexp: "{{item.From}}"
+       line:  "{{item.To}}"
+       state: present 
+    with_items: 
+       - {From: '^certificat*', To: "certificat: {{certificat}}"}
+       - {From: '^controler*', To: "controler: {{controler}}"}
+       - {From: '^mastertoken*', To: "mastertoken: {{token}}"}
+       - {From: '^discovery_cert*', To: "discovery_cert: {{discovery}}"}
+       - {From: '^certificat*', To: "certificat: {{certificat}}"}
+    delegate_to: localhost
+    when: inventory_hostname =='kmaster-01'
+
+                                                     
+ 
+  - debug:
+      msg:
+        - "Le token est = {{token}}"
+        - "Le kubeadm = {{kubeadm.stdout_lines}}"
+        - "Le kubeadm3 est = {{kubeadm3.stdout_lines}}"
+        - "le certificat est = {{certificat}}"
+        - "Le discovery-token est = {{discovery}}"
+        - "Le controler est = {{controler}}"
+    when: ansible_host=='kmaster-01'
+
+   

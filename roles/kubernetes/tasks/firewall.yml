@@ -1,0 +1,30 @@
+
+- name: Add port to firewall on master node
+  tags: deploy,install 
+  firewalld:
+    permanent: true 
+    state: enabled 
+    port: "{{item}}"    
+#  when: ansible_host=='kmaster-03'
+  when: "'masters' in group_names"
+  with_items:
+    - "{{ports}}" 
+  
+- name: Add port fot firewall on worker nodes
+  tags: deploy,install
+  firewalld:
+    permanent: true 
+    state: enabled
+    port: "{{item}}"
+  when: ansible_host!='kmaster-01'
+  with_items:
+    - "{{workerports}}"
+
+
+- name: reload firewall
+  tags: deploy,install 
+  command: firewall-cmd --reload
+
+
+
+

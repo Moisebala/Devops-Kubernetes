@@ -1,0 +1,59 @@
+
+
+- name: drain worker nodes before
+  tags: drain
+  shell:  kubectl drain "{{item}}" --delete-emptydir-data --force --ignore-daemonsets
+  when: ansible_host=='kmaster-01'
+  with_items: 
+    - "{{nodes}}"
+  
+
+- name: Delete worker nodes from the cluster
+  tags: drain
+  become_user: root
+  shell: kubectl delete node "{{item}}" 
+  when: ansible_host=='kmaster-01'
+  with_items: 
+    - "{{nodes}}"
+
+
+- name: Reinisialize de iptables 
+  tags: drain, delete, install, iptable
+  become_user: root
+  shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X 
+
+
+- name: reset IPVS tableis
+  tags: drain ,install
+  become_user: root
+  command:  ipvsadm -C
+  when: ansible_host!='kmaster-01'
+
+- name: Remove kubernetes old files 
+  tags: delete,drain
+  become_user: root
+  file:
+    state: absent
+    path: "{{item}}"
+  when: ansible_host!='kmaster-01'
+  with_items:
+     - "/var/lib/etcd"
+     - "/etc/kubernetes/"
+     - "/etc/cni/net.d/10-calico.conflist"
+     - "/etc/cni/net.d/calico-kubeconfig"
+
+- name: reset le kubelet service 
+  tags: drain ,delete
+  service:
+     name: kubelet
+     state: restarted
+
+
+#- name: Validate nodes are removedi
+#  tags: drain
+#  command: kubectl get nodes 
+#  when: ansible_host=='kmaster-01'
+#  register: servers
+
+
+#- debug: var=servers

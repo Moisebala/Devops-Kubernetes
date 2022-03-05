@@ -1,0 +1,42 @@
+
+#- name: Copier admin.conf dans le directory HOME/config
+#  file:
+#    path: $HOME/moussa01
+#    owner: "{{ansible_effective_user_id | string }}"
+#    group: "{{ansible_effective_group_id | string }}"
+#    state: directory 
+
+
+- name: Patch the server 
+  tags: patch,deploy,install	
+  yum:
+    name: '*'
+    state: latest
+    lock_timeout: 180
+#  shell: "yum -y update"
+  register: patchresult
+
+
+- name: Reboot the server
+  tags: reboot,deploy,install, kernel  
+  reboot: 
+    reboot_timeout: 3600
+
+
+
+#- name: wait for the reboot and reconnect
+#  wait_for:
+#    port: 22
+#    host: '{{(ansible_ssh_host | default(ansible_host)) | default(inventory_hostname) }}'
+#    search_regex: OpenSSH
+#    delay: 10 
+#    timeout: 120
+#  connection: local
+
+
+- name: Check the uptime of the servers
+  shell: "uptime"
+  register: Uptime
+
+- debug: var=Uptime.stdout
+

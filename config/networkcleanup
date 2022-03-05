@@ -1,0 +1,151 @@
+
+=====================================================================
+CLean up calico or flannel config after changing network 
+=====================================================================
+
+# ip route flush proto bird
+
+# ip link list | grep cali | awk '{print $2}' | cut -c 1-15 | xargs -I {} ip link delete {}
+
+# modprobe -r ipip
+
+# rm /etc/cni/net.d/10-calico.conflist && rm /etc/cni/net.d/calico-kubeconfig
+
+# service kubelet restart
+
+#iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+
+=====================================================================
+Dashboard cleanup 
+====================================================================
+kubectl delete deployment kubernetes-dashboard --namespace=kubernetes-dashboard
+kubectl delete service kubernetes-dashboard  --namespace=kubernetes-dashboard
+kubectl delete role kubernetes-dashboard-minimal --namespace=kubernetes-dashboard
+kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kubernetes-dashboard
+kubectl delete sa kubernetes-dashboard --namespace=kubernetes-dashboard
+kubectl delete secret kubernetes-dashboard-certs --namespace=kubernetes-dashboard
+kubectl delete secret kubernetes-dashboard-key-holder --namespace=kubernetes-dashboard
+
+
+========================================================================
+Calico install
+=======================================================================
+
+cat > /etc/yum.repos.d/calico.repo <<EOF
+[calico]
+name=Calico Repository
+baseurl=http://binaries.projectcalico.org/rpm/calico-3.19/
+enabled=1
+skip_if_unavailable=0
+gpgcheck=1
+gpgkey=http://binaries.projectcalico.org/rpm/calico-3.19/key
+priority=97
+EOF
+
+#yum install calico-felix
+
+urlBinnaire calicoctl: curl -o calicoctl -O -L  "https://github.com/projectcalico/calicoctl/releases/download/v3.19.1/calicoctl" 
+urlBinaire kubectl-calico: curl -o kubectl-calico -O -L  "https://github.com/projectcalico/calicoctl/releases/download/v3.19.1/calicoctl" 
+
+Variable: 
+FELIX_DATASTORETYPE	Set to kubernetes
+KUBECONFIG	Path to kubeconfig file to access the Kubernetes API Server
+
+# chmod +x kubectl-calico
+# mv calicoctl /usr/local/sbin
+
+# calicoctl version
+# calicoctl node status
+# calicoctl get ippools default-ipv4-ippool -o yaml
+# calicoctl ipam show
+# calicoctl ipam show --show-blocks
+# calicoctl get networkpolicies --all-namespaces
+# calicoctl get globalnetworkpolicies
+# calicoctl get networkpolicies --all-namespaces
+
+==========================================================================================
+CLuster Health check 
+=======================================================================================
+# kubectl cluster-info 
+#kubectl gets nodes
+#kubectl get cs 
+
+*** Fix unhealthy cluster scheduler************
+comment -- port 0
+# sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml
+# sudo vi /etc/kubernetes/manifests/kube-controller-manager.yaml
+# sudo systemctl restart kubelet.service
+ 
+
+# kubectl get --raw='/readyz?verbose'
+# curl -k 'https://localhost:6443/readyz?verbose&exclude=etcd'
+
+# curl -k https://localhost:6443/livez/etcd
+
+#  kubectl edit configmap kube-proxy -n kube-system
+
+# kubectl -n kube-system get secret ets-admin-token-j7sp6  -o jsonpath={.data.token} | base64 -d
+
+# kubectl proxy --address='0.0.0.0' --port=8002 --accept-hosts='.*'
+----------------
+Remote acces config 
+--------------
+scp -r root@kmaster-01:/root/.kube .
+scp -r root@kmaster-01:/etc/kubernetes/admin.conf ~/.kube/config
+
+ sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2
+ sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
+ sudo update-alternatives --config python
+
+==============================================================================
+Kubectl connectivity issue
+================================================================================
+
+*** Error: etcd cluster is not healthy: failed to dial endpoint https://192.168.80.13:2379**** 
+
+# kubectl exec -ti etcd-k8s-master01 -n kube-system sh
+
+# export ETCDCTL_API=3
+etcdctl --cacert="/etc/kubernetes/pki/etcd/ca.crt" --cert="/etc/kubernetes/pki/etcd/server.crt" --key="/etc/kubernetes/pki/etcd/server.key" member list
+
+
+# etcdctl --cacert="/etc/kubernetes/pki/etcd/ca.crt" --cert="/etc/kubernetes/pki/etcd/server.crt" --key="/etc/kubernetes/pki/etcd/server.key" member remove 17826e460c060952
+
+
+
+:~# k get cs
+Warning: v1 ComponentStatus is deprecated in v1.19+
+NAME                 STATUS      MESSAGE                                                                                       ERROR
+controller-manager   Unhealthy   Get "http://127.0.0.1:10252/healthz": dial tcp 127.0.0.1:10252: connect: connection refused   
+scheduler            Unhealthy   Get "http://127.0.0.1:10251/healthz": dial tcp 127.0.0.1:10251: connect: connection refused   
+etcd-0               Healthy     {"health":"true"} 
+--------
+
+Modify the following files on all master nodes:
+
+$ sudo vim /etc/kubernetes/manifests/kube-scheduler.yaml
+
+Comment or delete the line:
+
+- --port=0
+
+in (spec->containers->command->kube-scheduler)
+
+$ sudo vim /etc/kubernetes/manifests/kube-controller-manager.yaml
+
+Comment or delete the line:
+
+- --port=0
+
+in (spec->containers->command->kube-controller-manager)
+
+Then restart kubelet service:
+
+$ sudo systemctl restart kubelet.service
+
+
+
+
+
+
+========================================================================/bin/bash: indent: command not found

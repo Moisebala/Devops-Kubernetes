@@ -1,0 +1,59 @@
+
+- name: Fix net.bridge,bridge-nf-call-iptables issue(1/2)
+  tags: deploy,install
+  copy:
+    content: |
+       net.bridge.bridge-nf-call-ip6tables = 1
+       net.bridge.bridge-nf-call-iptables = 1
+
+    dest: /etc/sysctl.d/k8s.conf
+  register: fix 
+
+
+- name: Fix net.bridge,bridge-nf-call-iptables issue(2/2)  
+  tags: deploy,install      
+  command: sysctl --system
+  when: fix.changed
+
+- name: update the /etc/host file 
+  tags: deploy,install
+  copy:
+    src: config/hosts
+    dest: /etc/hosts 
+  register: hosts
+
+
+- name: Disable SWAP partitions
+  tags: deploy, install 
+  command: swapoff -a 
+
+
+- name: Remove any swap partition defined in /etc/fstab
+  tags: deploy, install
+  lineinfile:
+    path: /etc/fstab
+    regexp: '\sswap\s'
+    state: absent
+
+- name: Configure storage backend for Docker Engine
+  tags: deploy, install
+  copy:
+    content: 'STORAGE_DRIVER=overlay2'
+    dest: /etc/sysconfig/docker-storage-setup
+  register: dockerstorage
+    
+- name: Initialize storage backend for Docker Engine
+  tags: deploy,install
+  command: docker-storage-setup
+  when: dockerstorage.changed
+
+
+- name: Disable SELinux
+  tags: deploy,install
+  selinux:
+    policy: targeted
+    state: permissive
+
+
+
+  

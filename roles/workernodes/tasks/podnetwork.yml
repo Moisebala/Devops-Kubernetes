@@ -1,0 +1,11 @@
+- name: Copying  the calico pod networking on the master
+  tags: calico,network
+  copy:
+    src: config/calico.yaml
+    dest: $HOME/calico.yaml
+  when: ansible_host=='kmaster-01'
+
+- name: Applying the calico configs on the cluster
+  tags: calico,network
+  command: kubectl apply -f $HOME/calico.yaml
+  when: ansible_host=='kmaster-01'

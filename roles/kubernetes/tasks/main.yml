@@ -1,0 +1,10 @@
+---
+# tasks file for kubernetes
+
+- import_tasks: drain.yml
+- import_tasks: destroy.yml
+- import_tasks: docker.yml
+- import_tasks: firewall.yml
+- import_tasks: generalconfig.yml
+- import_tasks: installkube.yml
+- import_tasks: deploy.yml

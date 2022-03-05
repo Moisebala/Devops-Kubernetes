@@ -1,0 +1,29 @@
+
+- name: join the master of the cluster 
+  tags: join
+  command: kubeadm join "{{controler}}" --token "{{mastertoken}}" --discovery-token-ca-cert-hash "{{discovery_cert}}" 
+  when: "'workers' in group_names"
+  register: join 
+
+- name: save logs for joining workers
+  tags: join 
+  copy:
+    content: "{{join}}"
+    dest: $HOME/"{{ansible_host}}".log
+  when: ansible_host!='kmaster-01'
+
+
+- name: add new master node into  the cluster
+  tags: join-master
+  command: kubeadm join "{{controler}}" --token "{{mastertoken}}" --discovery-token-ca-cert-hash "{{discovery_cert}}" --control-plane --certificate-key "{{certificat}}" --apiserver-advertise-address "{{apiadvertise}}"
+  when: "'masters' in group_names"
+  register: masteradded
+
+- debug: var=join
+
+
+
+
+
+
+

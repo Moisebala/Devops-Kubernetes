@@ -1,0 +1,57 @@
+# recuperation des Variables du master nodes pour creer les vars
+
+  - shell: cat  ~/.kube/master.log  |  awk '$1 ~ /^ *kubeadm/'
+    tags: install
+    register: kubeadm
+    when: ansible_host =='kmaster-01'
+    ignore_errors: true
+
+
+  - shell: cat  ~/.kube/master.log  |  awk '$1 ~ /^ *--/'
+    tags: install
+    register: kubeadm3
+    when: ansible_host =='kmaster-01'
+    ignore_errors: true
+
+  - name: definir variable controler
+    tags: install
+    set_fact:
+        controler: "{{((kubeadm.stdout).split('\n')[0]).split(' ')[4] }}"
+    when: ansible_host=='kmaster-01'
+
+  - name: definir variable du token
+    tags: install
+    set_fact:
+        token: "{{((kubeadm.stdout).split('\n')[0]).split(' ')[6] }}"
+    when: ansible_host=='kmaster-01'
+
+  - name: definir variable du discovery-token
+    tags: install
+    set_fact:
+        discovery: "{{((kubeadm3.stdout).split('\n')[0]).split(' ')[1] }}"
+    when: ansible_host=='kmaster-01'
+
+  - name: definir variable du certificat key
+    tags: install
+    set_fact:
+        certificat: "{{((kubeadm3.stdout).split('\n')[1]).split(' ')[2] }}"
+    when: ansible_host=='kmaster-01'
+
+  - name: Modifier workers/vars/main.yml
+    tags: tests, install
+    become: yes
+    become_user: root
+    lineinfile:
+       path:  roles/workernodes/vars/main.yml
+       regexp: "{{item.From}}"
+       line:  "{{item.To}}"
+       state: present
+    with_items:
+       - {From: '^certificat*', To: "certificat: {{certificat}}"}
+       - {From: '^controler*', To: "controler: {{controler}}"}
+       - {From: '^mastertoken*', To: "mastertoken: {{token}}"}
+       - {From: '^discovery_cert*', To: "discovery_cert: {{discovery}}"}
+       - {From: '^certificat*', To: "certificat: {{certificat}}"}
+    delegate_to: localhost
+    when: inventory_hostname =='kmaster-01'
+

@@ -1,0 +1,17 @@
+---
+# vars file for workernodes
+
+controler: 192.168.200.20:6443
+
+mastertoken: rx6o5g.zz8i9f2tdb7c5ow3
+
+discovery_cert: sha256:1137a07a71fb5930b32553460ca8df00ba1cc8deaea295435f960179cfb49ec3
+
+certificat: 2389edcefb4e9257d2178d4a4d16d1196da5356a7a9d65b3712e6640e7f28fac
+
+#apiadvertise: 192.168.200.13 
+
+
+
+
+

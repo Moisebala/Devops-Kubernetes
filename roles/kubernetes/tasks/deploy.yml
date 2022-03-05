@@ -1,0 +1,47 @@
+
+- name: kubeadm deployment on the master node with load balancer
+  tags: kubeadm,install 
+  command: kubeadm init --pod-network-cidr="{{podnetwork}}" --service-cidr="{{service}}" --upload-certs --apiserver-advertise-address="{{apiserver}}" --control-plane-endpoint="{{endpoint}}"
+  when: ansible_host=='kmaster-01'
+  register: kubemaster
+  
+- name: creating a .kube directory in the user HOME
+  tags: kubeadm,install
+  file: 
+    path: $HOME/.kube
+    state: directory
+  when: ansible_host=='kmaster-01'
+
+
+- name: Copier admin.conf dans le directory HOME/config
+  tags: kubeadm,install
+  copy: 
+    src: /etc/kubernetes/admin.conf
+    dest: $HOME/.kube/config
+    owner: "{{ansible_effective_user_id | string }}"
+    group: "{{ansible_effective_group_id | string }}"
+    remote_src: yes
+  when: ansible_host=='kmaster-01'
+
+- name: Copier admin.conf dans sur le workstation
+  tags: kubeadm,install
+  become: yes
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: ~/.kube/config
+    flat: yes
+  when: ansible_host=='kmaster-01'
+
+- name: Saving logs off the cluster
+  tags: kubeadm,install
+  copy: 
+    content: "{{kubemaster.stdout}}"
+    dest: $HOME/.kube/master.log
+  when: ansible_host=='kmaster-01' 
+  
+- debug: var=kubemaster
+  tags: kubeadm
+
+
+
+#shell: kubeadm init --service-cidr=10.49.0.0/16  --pod-network-cidr=10.48.0.0/16  --service-dns-domain=cluster.local

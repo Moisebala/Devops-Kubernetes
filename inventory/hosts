@@ -1,0 +1,22 @@
+all:
+ children:
+    cluster:
+      children:
+         masters:
+           hosts:         
+             kmaster-01:
+#               ansible_ssh_host: 192.168.200.21
+             kmaster-02:
+#               ansible_ssh_host: 192.168.200.10
+             kmaster-03:
+#               ansible_ssh_host: 192.168.200.13
+         workers:
+           hosts:
+             kworker-01:
+#               ansible_ssh_host: 192.168.200.22
+             kworker-02:
+#               ansible_ssh_host: 192.168.200.23
+             kworker-03:
+#                ansible_ssh_host: 192.168.200.11
+             kworker-04:
+#                ansible_ssh_host: 192.168.200.12  

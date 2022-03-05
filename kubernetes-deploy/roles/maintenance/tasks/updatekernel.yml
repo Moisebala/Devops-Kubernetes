@@ -1,0 +1,28 @@
+- name: Add ELRepo
+  tags: kernel
+  yum:
+    name: https://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+    state: latest
+
+- name: Install latest mainline kernel
+  tags: kernel
+  yum:
+    name: kernel-ml
+    state: latest
+    enablerepo: elrepo-kernel
+
+- name: Set Default Kernel Version
+  tags: kernel
+  lineinfile:
+     path:  /etc/default/grub
+     regexp: "{{item.From}}"
+     line:  "{{item.To}}"
+     state: present
+  with_items:
+    - {From: '^GRUB_DEFAULT*', To: "GRUB_DEFAULT=0"}
+
+
+- name: Remake grub config to pick up new kernel
+  tags: kernel
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+

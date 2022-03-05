@@ -1,0 +1,20 @@
+
+- name: Install packages that allow yum to be used over Https
+  tags: deploy, package,install
+  yum:
+   name: "{{packages}}"
+   state: present
+   update_cache: yes
+
+- name: Install docker/podman Engine 
+  tags: deploy,install
+  yum:
+   name: docker
+   state: latest
+
+- name: Enable docker Engine service
+  tags: deploy  ,install
+  service:
+   name: docker
+   enabled: yes
+   state: started

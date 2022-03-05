@@ -1,0 +1,37 @@
+---
+# vars file for kubernetes
+
+packages:
+ - curl
+ - git
+ - wget
+ - bash-completion
+ - lsof
+ - net-tools
+ - ipvsadm
+ - psmisc
+ - openssl-devel 
+ - ca-certificates
+ - iperf3
+ 
+
+ports: "['6443/tcp','2379-2380/tcp','10250/tcp','10251/tcp','10252/tcp','10255/tcp']"
+
+workerports: "['10251/tcp','10255/tcp', '10250/tcp', '10252/tcp', '30000-32767/tcp']"
+
+
+
+nodes:
+ - kworker-01
+ - kworker-02
+ - kworker-03
+ - kworker-04
+ - kmaster-02
+ - kmaster-03
+
+
+kube:
+ - kubelet
+ - kubeadm
+ - kubectl
+

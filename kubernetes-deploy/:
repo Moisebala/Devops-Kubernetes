@@ -1,0 +1,59 @@
+- hosts: all
+  gather_facts: yes 
+  vars:
+     contents: "{{ lookup('file', '~/.kube/master.log') }}"
+     become_user: root
+  tasks: 
+  
+#  - name: copy test en remote 
+#    copy: 
+#      src: $HOME/test1/moussa
+#      dest: $HOME/test2/allo
+#      remote_src: yes
+#    register: remote
+
+#  - name: Save register
+#    copy:
+#      content: "{{remote}}"
+#      dest: $HOME/test2/remote.log
+
+#  - name: "Searching for a String"
+#    become: yes
+#    become_user: root
+#    tags: example1
+#    when: ansible_host=='kmaster-01'
+#    lineinfile:
+#       path: ~/.kube/master.log
+#       regexp: '^%kubeadm'
+#       line: "kubeadm join"
+#       state: present
+#    check_mode: yes
+#    register: kubeadm
+#    failed_when: kubeadm is changed 
+
+#  - name: "sample task in case the String kubeadm in the file"
+#    debug: msg="DEBUG is enabled in master Log file"
+#    when: kubeadm is not changed
+
+
+  - name: get vars from file
+    tags: tests 
+    become_user: root
+#    command: ping -c 4  "{{ansible_host}}"
+    debug: msg="{{item}}"
+    loop: "{{ lookup('file', '~/.kube/master.log').splitlines() }}"
+    when: ansible_host=='kmaster-01' && 'kubeadm' in {{item}}
+#    lineinfile:
+#       path: ~/.kube/master.log
+#       search_string: 'kubeadm join'
+#       content: 'kubeadm'
+#       remote_src: yes
+
+#    when: ansible_host=='kmaster-01'
+    register: kubeadm
+
+# - debug: "{{controler}}" --token "{{mastertoken}}" --discovery-token-ca-cert-hash sha256:"{{discovery_cert}}"
+  
+ 
+  - debug: "{{kubeadm}}"
+    when: ansible_host=='kmaster-01' 

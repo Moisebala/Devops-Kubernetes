@@ -1,0 +1,13 @@
+
+- name : Destroy the cluster
+  tags: delete,install 
+  command: kubeadm reset -f 
+  
+- name: remove the .kube directory
+  tags: delete,install 
+  file: 
+    path: $HOME/.kube
+    state: absent
+# when: ansible_host=='kmaster-01' 
+
+

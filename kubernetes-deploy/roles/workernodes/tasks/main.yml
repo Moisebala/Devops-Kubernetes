@@ -1,0 +1,8 @@
+---
+# tasks file for workernodes
+
+- import_tasks: podnetwork.yml
+- import_tasks: join.yml
+- import_tasks: variable.yml
+
+

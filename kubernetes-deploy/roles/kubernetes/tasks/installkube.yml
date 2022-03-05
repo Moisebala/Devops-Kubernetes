@@ -1,0 +1,29 @@
+
+- name: Add upstream Kubernetes repository
+  tags: deploy,install 
+  yum_repository: 
+    name: kubernetes
+    description: Community Kubernetes 
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    enabled: yes
+
+
+- name: Install Kubernetes components
+  tags: deploy,install
+  yum:
+    name: '{{kube}}'
+    state: latest
+
+
+
+- name: Enable Kubelet service
+  tags: deploy,install 
+  service:
+    name: kubelet
+    enabled: yes
+
+
+

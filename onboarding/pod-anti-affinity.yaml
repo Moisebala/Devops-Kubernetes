@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-pod-antiaffinity
+spec:
+  affinity:
+    podAntiAffinity: 
+      preferredDuringSchedulingIgnoredDuringExecution: 
+      - weight: 100 
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: registry 
+              operator: In 
+              values:
+              - default
+          topologyKey: kubernetes.io/hostname

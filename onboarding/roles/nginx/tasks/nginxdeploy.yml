@@ -1,0 +1,12 @@
+
+- name: copy ngnix config to the master 
+  copy:
+    src: config/nginx.yaml
+    dest: $HOME/nginx.yaml
+  when: ansible_host=='kmaster-01'
+    
+
+
+- name: Deployment of ngnix 
+  command: kubectl apply -f $HOME/nginx.yaml
+  when: ansible_host=='kmaster-01'

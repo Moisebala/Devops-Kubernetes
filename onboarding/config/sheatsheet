@@ -1,0 +1,87 @@
+affichage commandes : 
+====================================================================
+
+
+
+Config validation commande: 
+===================================================================
+
+kubectl get configmap --all-namespaces
+kubectl edit configmap prometheus-server-conf -n monitoring
+kubectl edit configmap kubectl edit configmap prometheus-server-conf -n monitoring -n kube-system
+kubectl edit configmap prometheus-server-conf -n monitoring
+kubectl edit configmap kubeadm-config   -n kube-system
+
+kubectl explain statefulset
+
+kubectl edit node kmaster-03
+
+kubectl get node kmaster-03 -o yaml
+
+Adding token and certificat for a new controle plane 
+===============================================================
+
+#kubeadm init phase upload-certs --upload-certs
+#kubeadm token create 
+#kubeadm join [cluster-ip]:6443 --token [token] --discovery-token-ca-cert-hash [sha256token] --control-plane --certificate-key  --apiserver-advertise-address [new master-IP]
+
+*** join controle plan****
+
+#kubeadm join 192.168.200.20:6443 --token inj3pu.d7wh7at716fzd1h6 --discovery-token-ca-cert-hash sha256:3b301d169b1d47959942643d11037dffbc654770446aaf701d9c6211460a8ba6 --control-plane --certificate-key c381487f8f9c0a2fa5eca6c602366f6e810645a8eaaa941eb55713f56f1f0536 --apiserver-advertise-address 192.168.200.13
+
+
+Upgrade de cluster version 
+=====================================================================
+#kubeadm upgrade plan
+#sudo kubeadm upgrade apply v1.22.x
+
+***maintenance mode***********************
+kubectl drain to remove a node from service
+
+#kubectl drain <node name>
+
+#kubectl uncordon <node name>
+
+
+Network commande
+===================================================================
+**change node internal ip ************
+[root@Node-18121 ~]# cat /var/lib/kubelet/kubeadm-flags.env
+KUBELET_KUBEADM_ARGS=--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=k8s.gcr.io/pause:3.1 --node-ip=10.10.10.1
+
+systemctl daemon-reload && systemctl restart kubelet
+
+check interface info:
+# udevadm info /sys/class/net/ens9
+
+#sudo nmcli device show 
+#sudo nmcli connection show 
+
+ip link change name : 
+
+#sudo ip link set ens4 down
+#sudo ip link set ens4 name ens8
+#sudo ip link set ens8 up
+
+change interface name:
+
+# nmcli connection delete <uuid>
+#sudo nmcli connection modify ens9 connection.interface-name ens8
+#sudo nmcli connection modify ens9 connection.id ens8
+
+#sudo nmcli connection show ens9 | grep connection -m 3
+
+virsh commande 
+==================================================================
+
+virsh nodedev-list | grep af 
+virsh list all
+virsh attach-device kmaster-xx sriov_in.xml --config 
+virsh edit kmaster-xx 
+virsh destroy kmaster-xx
+virsh start kmaster-xx
+
+
+
+
+

@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos
+spec:
+  template:
+    metadata:
+      name: centos-app-pod
+    spec: 
+      containers:
+      - name: app-pod-01
+        image: centos:7 
+      restartPolicy: Never

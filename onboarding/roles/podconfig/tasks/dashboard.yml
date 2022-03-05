@@ -1,0 +1,130 @@
+
+- name: copy de dashboard config on the master
+  tags: dashboard
+  copy: 
+    src: "config/dashboard/{{item}}"
+    dest: "$HOME/{{item}}"
+  when: ansible_host=='kmaster-01'
+  with_items: 
+    - dashboard.yaml
+    - admin-user.yaml
+    - admin-rbac.yaml
+
+- name: deploy the dashboard
+  tags: dashboard 
+  command: kubectl apply -f $HOME/dashboard.yaml
+  when: ansible_host=='kmaster-01'
+  register: dashboard
+  
+- name: Save dashboard logs 
+  tags: dashboard
+  copy: 
+    content: "{{dashboard}}"
+    dest: $HOME/dashboard.log 
+  when: ansible_host=='kmaster-01'
+
+- name: Create Admin service account
+  tags: dashboard
+  command: kubectl apply -f $HOME/admin-user.yaml
+  when: ansible_host=='kmaster-01'
+  environment:
+    SA_NAME: 'ets-admin' 
+
+- name: Create a cluster Role Binding
+  tags: dashboard
+  command: kubectl apply -f $HOME/admin-rbac.yaml
+  when: ansible_host=='kmaster-01'
+
+- name: Creating a diractory for the Dashboard certificate
+  tags: dashboard
+  file:
+    path: /tmp/dashboard_cert
+    state: directory 
+
+- name: Creating a Private Key for the Dashboard Certificate.
+  tags: dashboard
+  openssl_privatekey:
+    path: /tmp/dashboard_cert/dashboard.key
+  when: ansible_host=='kmaster-01'
+
+- name: Creating a CSR for the Dashboard Certificate.
+  tags: dashboard
+  openssl_csr:
+    path: /tmp/dashboard_cert/dashboard.csr
+    privatekey_path: /tmp/dashboard_cert/dashboard.key
+    common_name: kubernetes-dashboard
+  when: ansible_host=='kmaster-01'
+
+
+- name: Creating a Certificate for the Dashboard.
+  tags: dashboard
+  openssl_certificate:
+    path: /tmp/dashboard_cert/dashboard.crt
+    privatekey_path: /tmp/dashboard_cert/dashboard.key
+    csr_path: /tmp/dashboard_cert/dashboard.csr
+    provider: selfsigned
+  when: ansible_host=='kmaster-01'
+
+
+- name: Removing the existing certificates Secret for the Dashboard.
+  tags: dashboard
+  shell: kubectl delete secret -n kubernetes-dashboard kubernetes-dashboard-certs
+  when: ansible_host=='kmaster-01'
+
+- name: Removing the existing Service for the Dashboard.
+  tags: dashboard
+  shell: kubectl delete service -n kubernetes-dashboard kubernetes-dashboard
+  when:  ansible_host=='kmaster-01'
+
+- name: Creating a Secret to hold the Certificates.
+  tags: dashboard
+  shell: kubectl create secret generic kubernetes-dashboard-certs --from-file=/tmp/dashboard_cert -n kubernetes-dashboard
+  when: ansible_host=='kmaster-01'
+
+- name: Obtain admin user token
+  tags: dashboard
+  shell: kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep ${SA_NAME}  | awk '{print $1}')
+  when: ansible_host=='kmaster-01'
+  register: admintoken
+
+
+- name: Creating a Service to expose the Dashboard
+  tags: dashboard 
+  command: kubectl apply -f $HOME/dashboard.yaml
+  when: ansible_host=='kmaster-01'
+  
+
+- name: Deleting the existing Dashboard pod to reload the certificate.
+  tags: dashboard
+  shell: kubectl delete pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard
+  when: ansible_host=='kmaster-01'
+
+#- name: Waiting for the deployment to be ready.
+#  wait_for:
+#    host: kmaster-01
+#    port: 8443
+#    timeout: 300
+#    msg: "Application was not available after 5 minutes. Something has probably gone wrong."
+#  when: ansible_host=='kmaster-01'
+
+- name: Deleting the temporary Dashboard Certs directory.
+  tags: dashboard
+  file:
+    path: /tmp/dashboard_cert
+    state: absent
+  when: ansible_host=='kmaster-01'
+
+- name: Save admin service account logs
+  tags: dashboard
+  copy:
+    content: "{{admintoken.stdout}}"
+    dest: $HOME/admintoken.log
+  when: ansible_host=='kmaster-01'
+
+#- name: Copying authentication token to your workstation.
+#  tags: dashboard
+#  local_action: copy content={{ admintoken.stdout }} dest=~/.kube/authentication_token
+#  when: ansible_host=='kmaster-01'
+
+- debug: var=admintoken
+  tags: dashboard

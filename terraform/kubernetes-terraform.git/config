@@ -1,0 +1,8 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = ssh://git@10.194.32.173:2224/balacite/kubernetes-terraform.git
+	fetch = +refs/*:refs/*
+	mirror = true

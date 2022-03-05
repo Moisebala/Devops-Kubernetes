@@ -1,0 +1,4 @@
+---
+# tasks file for mysqlDatabase
+
+- import_tasks: deploy.yml

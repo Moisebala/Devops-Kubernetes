@@ -1,0 +1,13 @@
+---
+# vars file for podconfig
+
+dashboardUrl: 'https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml'
+
+#****old vervion 1.21*****
+
+calicoUrl: 'https://docs.projectcalico.org/v3.8/manifests/calico.yaml'
+
+#****new version 1.22.2 + ****************
+
+calicoUrlnew: "https://docs.projectcalico.org/manifests/calico.yaml"
+

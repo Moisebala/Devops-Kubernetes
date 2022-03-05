@@ -1,0 +1,25 @@
+
+- name: copy config fils on remote node 
+  tags: mysql
+  copy: 
+    src: "config/mysql/{{item}}"
+    dest: "$HOME/{{item}}"
+  when: ansible_host=='kmaster-01'  
+  with_items: 
+    - mysql_persistentVolume.yaml 
+    - mysql_persistentVolumeClaim.yaml
+    - mysql_deployment.yaml
+    - mysql_service.yaml
+ 
+- name: Execute the deployment
+  tags: mysql 
+  command: kubectl apply -f "$HOME/{{item}}"
+  when: ansible_host=='kmaster-01'
+  with_items:
+    - mysql_persistentVolume.yaml
+    - mysql_persistentVolumeClaim.yaml
+    - mysql_deployment.yaml
+    - mysql_service.yaml
+   
+
+

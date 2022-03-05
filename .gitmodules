@@ -4,3 +4,6 @@
 [submodule "kubernetes-onboarding"]
 	path = kubernetes-onboarding
 	url = ssh://git@10.194.32.173:2224/balacite/kubernetes-onboarding.git
+[submodule "kubernetes-terraform"]
+	path = kubernetes-terraform
+	url = ssh://git@10.194.32.173:2224/balacite/kubernetes-terraform.git
